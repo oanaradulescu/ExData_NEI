@@ -1,0 +1,32 @@
+# 4. Across the United States, how have emissions from 
+# coal combustion-related sources changed from 1999–2008?
+
+NEI <- readRDS("summarySCC_PM25.rds")
+SCC <- readRDS("Source_Classification_Code.rds")
+
+library(dplyr)
+library(ggplot2)
+library(scales)
+
+pm25.4 <- function() {
+
+    # rows <- grep("[Cc][Oo][Aa][Ll]", SCC$Short.Name)
+    rows <- grep("coal", SCC$Short.Name, ignore.case = TRUE)
+    coal.scc <- SCC[rows,"SCC"]
+    
+    emissionsperyr.coal <- NEI %.%
+        filter(SCC %in% coal.scc) %.%
+        group_by(year) %.%
+        summarise(coalemissions = sum(Emissions))
+    
+    e <- ggplot(emissionsperyr.coal, aes(year, coalemissions)) + geom_point() + geom_line()
+    e <- e + ggtitle("PM2.5 Emissions from Coal Combustion-Related Sources\nUnited States") + 
+        scale_y_continuous(labels = comma) +
+        ylab("PM2.5 Emitted (Tons)") +
+        xlab("Year")
+    e
+}
+
+png(file = "pm2.5emissions-coal.png")
+pm25.4()
+dev.off()

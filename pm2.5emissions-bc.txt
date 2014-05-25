@@ -1,0 +1,36 @@
+# 2. Have total emissions from PM2.5 decreased in the Baltimore City, Maryland (fips == "24510") 
+# from 1999 to 2008? Use the base plotting system to make a plot answering this question.
+
+NEI <- readRDS("summarySCC_PM25.rds")
+SCC <- readRDS("Source_Classification_Code.rds")
+
+library(dplyr)
+
+pm25.2 <- function() {
+        
+        par(mar = c(5, 5, 4, 1) + 0.1)                
+        
+        emissionsperyr.bc <- filter(NEI, fips == "24510") %.%
+                group_by(year) %.%
+                summarise(totalemissions = sum(Emissions))
+        
+        with(emissionsperyr.bc, plot(year, totalemissions, type = "b", 
+                                     ann = FALSE,
+                                     xaxt = "n", yaxt = "n"))
+        with(emissionsperyr.bc, axis(1, at = year))
+        with(emissionsperyr.bc, axis(2, at = totalemissions, 
+                                     labels = prettyNum(totalemissions, big.mark = ","),
+                                     las = 2, cex.axis = 0.80))
+        
+        title(main = "PM2.5 Emissions, Baltimore City, Maryland",
+              xlab = "Year")
+        
+        mtext("PM2.5 Emitted (Tons)", side = 2, line = 4)
+        
+        with(emissionsperyr.bc, abline(h = totalemissions, col = '#000000', lty = 3))
+        with(emissionsperyr.bc, abline(v = year, col = '#000000', lty = 3))
+}
+
+png(file = "pm2.5emissions-bc.png")
+pm25.2()
+dev.off()

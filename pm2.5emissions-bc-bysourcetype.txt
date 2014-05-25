@@ -1,0 +1,33 @@
+# 3. Of the four types of sources indicated by the type (point, nonpoint, onroad, nonroad) 
+# variable, which of these four sources have seen decreases 
+# in emissions from 1999–2008 for Baltimore City? 
+# Which have seen increases in emissions from 1999–2008? 
+# Use the ggplot2 plotting system to make a plot answer this question.
+
+NEI <- readRDS("summarySCC_PM25.rds")
+SCC <- readRDS("Source_Classification_Code.rds")
+
+library(dplyr)
+library(ggplot2)
+
+pm25.3 <- function() {
+
+    library(ggplot2)
+    
+    emissionsperyrntype.bc <- filter(NEI, fips == "24510") %.%
+        group_by(year, type) %.%
+        summarise(totalemissions = sum(Emissions))
+    
+    e <- ggplot(emissionsperyrntype.bc, aes(x=year, y=totalemissions, color=type)) + geom_line() + geom_point()
+    e <- e + ggtitle("PM2.5 Emissions by Source Type\nBaltimore City") + 
+        scale_color_discrete(name = "Source Type") + 
+        scale_y_continuous(labels = comma) +
+        ylab("PM2.5 Emitted (Tons)") +
+        xlab("Year")
+    e
+
+}
+
+png("pm2.5emissions-bc-bysourcetype.png")
+pm25.3()
+dev.off()
