@@ -223,6 +223,14 @@ dev.off()
 # with emissions from motor vehicle sources in Los Angeles County, California (fips == "06037"). 
 # Which city has seen greater changes over time in motor vehicle emissions?
 
+NEI <- readRDS("summarySCC_PM25.rds")
+SCC <- readRDS("Source_Classification_Code.rds")
+
+library(dplyr)
+library(ggplot2)
+library(scales)
+
+
 pm25.6 <- function() {
 
     emissionsperyr.bcla.motorvehicles <- NEI %.%
