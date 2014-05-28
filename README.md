@@ -1,6 +1,6 @@
 Analysis of Fine Particulate Matter (PM2.5) Emissions in the US
 ==========
-Exploratory Data Analysis w Roger D Peng, PhD, Johns Hopkins Data Science track @ Coursera
+via Exploratory Data Analysis w Roger D Peng, PhD, Johns Hopkins Data Science track @ Coursera
  
 ## Introduction
 
