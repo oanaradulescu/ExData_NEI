@@ -7,16 +7,8 @@
 
 # TODO show actual years in data set
 
-getwd()
-setwd("/Users/oana/Documents/Education/MOOC/Pop Datography | Telling Stories with Data/Data Science @ coursera/4 exploratory data analysis/exdata-data-NEI_data")
 
-NEI <- readRDS("summarySCC_PM25.rds")
-SCC <- readRDS("Source_Classification_Code.rds")
 
-install.packages("dplyr")
-library(dplyr)
-
-library(scales)
 
 # The bottleneck in most data analyses is the time it takes 
 # for you to figure out what to do with your data, 
@@ -28,14 +20,19 @@ library(scales)
 # Using the base plotting system, make a plot showing the total PM2.5 emission 
 # from all sources for each of the years 1999, 2002, 2005, and 2008.
 
-emissionsperyr <- NEI %.%
-    group_by(year) %.%
-    summarise(totalemissions = sum(Emissions))
+NEI <- readRDS("summarySCC_PM25.rds")
+SCC <- readRDS("Source_Classification_Code.rds")
+
+library(dplyr)
 
 pm25.1 <- function() {
 
     par(mar = c(5, 5, 4, 1) + 0.1)
     par(mgp = c(3, 1, 0.25))
+    
+    emissionsperyr <- NEI %.%
+            group_by(year) %.%
+            summarise(totalemissions = sum(Emissions))
     
     with(emissionsperyr, plot(year, totalemissions, type = "b", 
                               ann = FALSE, 
@@ -58,34 +55,44 @@ png(file = "pm2.5emissions-us.png")
 pm25.1()
 dev.off()
 
-# TODO
-# format y-axis ticks
-# format y-axis label
-# better align the x-axis values (1999, 2002, 2005, 2008) with the x-axis ticks
-# prettify: make the point outline bolder, improve typography
-# experiment with line plot vs. scatterplot
-
 # 2. Have total emissions from PM2.5 decreased in the Baltimore City, Maryland (fips == "24510") 
 # from 1999 to 2008? Use the base plotting system to make a plot answering this question.
 
+NEI <- readRDS("summarySCC_PM25.rds")
+SCC <- readRDS("Source_Classification_Code.rds")
+
+library(dplyr)
 
 pm25.2 <- function() {
+        
+    par(mar = c(5, 5, 4, 1) + 0.1)                
 
     emissionsperyr.bc <- filter(NEI, fips == "24510") %.%
         group_by(year) %.%
         summarise(totalemissions = sum(Emissions))
     
-    with(emissionsperyr.bc, plot(year, totalemissions, type = "b", ann = FALSE, las = 2, xaxt = "n"))
+    with(emissionsperyr.bc, plot(year, totalemissions, type = "b", 
+                                 ann = FALSE,
+                                 xaxt = "n", yaxt = "n"))
     with(emissionsperyr.bc, axis(1, at = year))
+    with(emissionsperyr.bc, axis(2, at = totalemissions, 
+                              labels = prettyNum(totalemissions, big.mark = ","),
+                              las = 2, cex.axis = 0.80))
+    
     title(main = "PM2.5 Emissions, Baltimore City, Maryland",
-          xlab = "Year",
-          ylab = "PM2.5 Emitted (Tons)")
-
+          xlab = "Year")
+    
+    mtext("PM2.5 Emitted (Tons)", side = 2, line = 4)
+    
+    with(emissionsperyr.bc, abline(h = totalemissions, col = '#000000', lty = 3))
+    with(emissionsperyr.bc, abline(v = year, col = '#000000', lty = 3))
 }
 
 png(file = "pm2.5emissions-bc.png")
 pm25.2()
 dev.off()
+
+#####
 
 library(ggplot2)
 
@@ -95,11 +102,19 @@ qplot(year, totalemissions, data=emissionsperyr.bc)
 qplot(year, totalemissions, data=emissionsperyr.bc, geom="line")
 ggplot(emissionsperyr.bc, aes(x=year, y=totalemissions)) + geom_line()
 
+#####
+
 # 3. Of the four types of sources indicated by the type (point, nonpoint, onroad, nonroad) 
 # variable, which of these four sources have seen decreases 
 # in emissions from 1999–2008 for Baltimore City? 
 # Which have seen increases in emissions from 1999–2008? 
 # Use the ggplot2 plotting system to make a plot answer this question.
+
+NEI <- readRDS("summarySCC_PM25.rds")
+SCC <- readRDS("Source_Classification_Code.rds")
+
+library(dplyr)
+library(ggplot2)
 
 pm25.3 <- function() {
 
@@ -110,8 +125,9 @@ pm25.3 <- function() {
         summarise(totalemissions = sum(Emissions))
     
     e <- ggplot(emissionsperyrntype.bc, aes(x=year, y=totalemissions, color=type)) + geom_line() + geom_point()
-    e + ggtitle("PM2.5 Emissions by Source Type\nBaltimore City") + 
+    e <- e + ggtitle("PM2.5 Emissions by Source Type\nBaltimore City") + 
         scale_color_discrete(name = "Source Type") + 
+        scale_y_continuous(labels = comma) +
         ylab("PM2.5 Emitted (Tons)") +
         xlab("Year")
     e
@@ -124,11 +140,10 @@ dev.off()
 
 
 # TODO
-# add title
-# format axis labels
-# format axis ticks
+# format axis labels - commas
 # improve legend: order, typography
 # add a horizontal line to help answer emissions decrease/increase for point sources
+# match years across the x axis with years in data set
 
 # 4. Across the United States, how have emissions from 
 # coal combustion-related sources changed from 1999–2008?
@@ -145,6 +160,13 @@ scc.names <- unique(SCC$Short.Name)
 
 ?grepl
 
+NEI <- readRDS("summarySCC_PM25.rds")
+SCC <- readRDS("Source_Classification_Code.rds")
+
+library(dplyr)
+library(ggplot2)
+library(scales)
+
 pm25.4 <- function() {
 
     # rows <- grep("[Cc][Oo][Aa][Ll]", SCC$Short.Name)
@@ -157,7 +179,7 @@ pm25.4 <- function() {
         summarise(coalemissions = sum(Emissions))
     
     e <- ggplot(emissionsperyr.coal, aes(year, coalemissions)) + geom_point() + geom_line()
-    e + ggtitle("PM2.5 Emissions from Coal Combustion-Related Sources\nUnited States") + 
+    e <- e + ggtitle("PM2.5 Emissions from Coal Combustion-Related Sources\nUnited States") + 
         scale_y_continuous(labels = comma) +
         ylab("PM2.5 Emitted (Tons)") +
         xlab("Year")
@@ -172,6 +194,13 @@ dev.off()
 
 # 5. How have emissions from motor vehicle sources changed from 1999–2008 in Baltimore City?
 
+NEI <- readRDS("summarySCC_PM25.rds")
+SCC <- readRDS("Source_Classification_Code.rds")
+
+library(dplyr)
+library(ggplot2)
+library(scales)
+
 pm25.5 <- function() {
     emissionsperyr.bc.motorvehicles <- NEI %.%
         filter(type == "ON-ROAD", fips == "24510") %.%
@@ -179,10 +208,11 @@ pm25.5 <- function() {
         summarise(onroademissions = sum(Emissions))
     
     e <- ggplot(emissionsperyr.bc.motorvehicles, aes(year, onroademissions)) + geom_point() + geom_line()
-    e + ggtitle("PM2.5 Emissions from Motor Vehicle Sources\nBaltimore City") +
+    e <- e + ggtitle("PM2.5 Emissions from Motor Vehicle Sources\nBaltimore City") +
         scale_y_continuous(labels = comma) +
         ylab("PM2.5 Emitted (Tons)") + 
         xlab("Year")
+    e
 }
 
 png(file = "pm2.5emissions-bc-motorvehicles.png")
@@ -193,6 +223,14 @@ dev.off()
 # with emissions from motor vehicle sources in Los Angeles County, California (fips == "06037"). 
 # Which city has seen greater changes over time in motor vehicle emissions?
 
+NEI <- readRDS("summarySCC_PM25.rds")
+SCC <- readRDS("Source_Classification_Code.rds")
+
+library(dplyr)
+library(ggplot2)
+library(scales)
+
+
 pm25.6 <- function() {
 
     emissionsperyr.bcla.motorvehicles <- NEI %.%
@@ -201,13 +239,14 @@ pm25.6 <- function() {
         summarise(onroademissions = sum(Emissions))
     
     e <- ggplot(emissionsperyr.bcla.motorvehicles, aes(x=year, y=onroademissions, color=fips)) + geom_point() + geom_line()
-    e + ggtitle("PM2.5 Emissions from Motor Vehicle Sources\nBaltimore City vs. Los Angeles County") +
+    e <- e + ggtitle("PM2.5 Emissions from Motor Vehicle Sources\nBaltimore City vs. Los Angeles County") +
         scale_y_continuous(labels = comma) +
         scale_color_discrete(name = "Location",
                              breaks = c("24510", "06037"),
                              labels = c("Baltimore City", "Los Angeles\nCounty")) +
         ylab("PM2.5 Emitted (Tons)") +
         xlab("Year")
+    e
 }
 
 png("pm2.5emissions-bcla-motorvehicles.png")
